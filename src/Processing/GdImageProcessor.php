@@ -48,13 +48,13 @@ final class GdImageProcessor
         $createdFiles = [];
         try {
             $this->ensureDirectory(dirname($originalDestination));
+            $createdFiles[] = $originalDestination;
             $this->writeImage(
                 $source,
                 $originalDestination,
                 $mimeType,
                 $processing
             );
-            $createdFiles[] = $originalDestination;
 
             $variantConfig = $processing['variants'] ?? [];
             if (!is_array($variantConfig)) {
@@ -89,13 +89,13 @@ final class GdImageProcessor
                 );
 
                 $destination = $variantsDirectory . DIRECTORY_SEPARATOR . $name . '.' . $this->extensionFor($mimeType);
+                $createdFiles[] = $destination;
                 try {
                     $this->writeImage($variantImage, $destination, $mimeType, $processing);
                 } finally {
                     imagedestroy($variantImage);
                 }
 
-                $createdFiles[] = $destination;
                 $size = filesize($destination);
                 if ($size === false) {
                     throw new MediaUploadException("Could not determine the size of image variant '{$name}'.");
