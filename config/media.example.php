@@ -16,6 +16,7 @@ return [
         'allowed_mime_types' => ['image/jpeg', 'image/png', 'image/webp'],
         'max_width' => 10000,
         'max_height' => 10000,
+        'max_pixels' => 40000000,
     ],
     'processing' => [
         'driver' => 'gd',
@@ -25,6 +26,7 @@ return [
             'large' => ['width' => 1600, 'height' => 1600, 'fit' => 'contain'],
         ],
         'jpeg_quality' => 85,
+        'png_compression' => 6,
         'webp_quality' => 82,
     ],
 ];
