@@ -10,7 +10,7 @@ This is a **local component installed separately inside each PHP application**. 
 - Single and multiple uploads
 - Content-based validation, size and dimension limits, and image decode checks
 - Safe image re-encoding and GD-based resizing
-- Original image plus generated variants
+- Original image plus generated thumbnail, medium, and large variants
 - Unique media identifiers and metadata persistence
 - Private storage outside the public web root
 - PHP delivery controller that serves media by ID without exposing physical paths
