@@ -37,6 +37,7 @@ final class PrivateLocalStorage
      *   file_size: int,
      *   width: int,
      *   height: int,
+     *   checksum_sha256: string,
      *   variants: array<string, array{storage_key: string, mime_type: string, file_size: int, width: int, height: int}>
      * }
      */
@@ -76,11 +77,17 @@ final class PrivateLocalStorage
                 ];
             }
 
+            $checksum = hash_file('sha256', $originalPath);
+            if (!is_string($checksum)) {
+                throw new MediaUploadException('Could not calculate the processed image checksum.');
+            }
+
             return [
                 'storage_key' => $originalKey,
                 'file_size' => $processingResult['file_size'],
                 'width' => $processingResult['width'],
                 'height' => $processingResult['height'],
+                'checksum_sha256' => $checksum,
                 'variants' => $variants,
             ];
         } catch (\Throwable $exception) {
