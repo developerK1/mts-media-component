@@ -77,8 +77,9 @@ final class ImageUploadValidator
         $height = (int) $imageInfo[1];
         $maxWidth = (int) ($uploadConfig['max_width'] ?? 10000);
         $maxHeight = (int) ($uploadConfig['max_height'] ?? 10000);
+        $maxPixels = (int) ($uploadConfig['max_pixels'] ?? 40000000);
 
-        if ($width < 1 || $height < 1 || $width > $maxWidth || $height > $maxHeight) {
+        if ($width < 1 || $height < 1 || $width > $maxWidth || $height > $maxHeight || ($width * $height) > $maxPixels) {
             throw new MediaUploadException('The image dimensions are outside the permitted range.');
         }
 
