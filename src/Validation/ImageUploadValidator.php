@@ -109,7 +109,7 @@ final class ImageUploadValidator
             return 'image';
         }
 
-        return mb_substr($name, 0, 255);
+        return substr($name, 0, 255);
     }
 
     private function uploadErrorMessage(int $error): string
