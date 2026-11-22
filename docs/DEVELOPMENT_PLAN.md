@@ -12,11 +12,11 @@
 
 ## Phase 2 — Upload engine
 
-- [ ] Accept single and multiple PHP uploads
-- [ ] Validate upload errors, file size, MIME/content, dimensions, and image decoding
-- [ ] Generate UUID media IDs and random storage keys
-- [ ] Store validated originals in private storage
-- [ ] Return consistent success and failure results
+- [x] Accept single and multiple PHP uploads
+- [x] Validate upload errors, file size, MIME/content, dimensions, and image decoding
+- [x] Generate UUID media IDs and random storage keys
+- [x] Store validated originals in private storage
+- [x] Return consistent success and failure results
 
 ## Phase 3 — Image processing
 
