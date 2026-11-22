@@ -1,0 +1,12 @@
+/vendor/
+/.env
+.env.*
+!.env.example
+/config/media.php
+/storage/*
+!/storage/.gitkeep
+/uploads/*
+/.phpunit.cache/
+/coverage/
+/.DS_Store
+Thumbs.db
