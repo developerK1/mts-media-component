@@ -40,7 +40,7 @@ final class MediaUploadService
                 'file_size' => $stored['file_size'],
                 'width' => $stored['width'],
                 'height' => $stored['height'],
-                'checksum_sha256' => $validated->sha256,
+                'checksum_sha256' => $stored['checksum_sha256'],
                 'storage_key' => $stored['storage_key'],
                 'variants' => $stored['variants'],
             ]);
