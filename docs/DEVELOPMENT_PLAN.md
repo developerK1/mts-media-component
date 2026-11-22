@@ -20,11 +20,11 @@
 
 ## Phase 3 — Image processing
 
-- [ ] Decode and re-encode JPEG, PNG, and WebP using GD
-- [ ] Generate thumbnail, medium, and large variants
-- [ ] Preserve transparency where supported
-- [ ] Apply configurable quality and dimension limits
-- [ ] Clean up partial files on failure
+- [x] Decode and re-encode JPEG, PNG, and WebP using GD
+- [x] Generate thumbnail, medium, and large variants
+- [x] Preserve transparency where supported
+- [x] Apply configurable quality and dimension limits
+- [x] Clean up partial files on failure
 
 ## Phase 4 — Metadata and lifecycle
 
