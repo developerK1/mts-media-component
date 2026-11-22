@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace MTS\Media\Storage;
 
 use MTS\Media\Exception\MediaUploadException;
+use MTS\Media\Processing\GdImageProcessor;
 use MTS\Media\Upload\ValidatedImage;
 
 final class PrivateLocalStorage
 {
     private string $root;
 
-    /**
-     * @param array<string, mixed> $config
-     */
-    public function __construct(array $config)
-    {
+    /** @param array<string, mixed> $config */
+    public function __construct(
+        array $config,
+        private readonly GdImageProcessor $processor = new GdImageProcessor()
+    ) {
         $root = $config['storage']['root'] ?? null;
-
         if (!is_string($root) || trim($root) === '') {
             throw new MediaUploadException('A private media storage root must be configured.');
         }
@@ -29,38 +29,75 @@ final class PrivateLocalStorage
     }
 
     /**
-     * Move a validated PHP upload into a generated private storage key.
+     * Store a clean re-encoded original and its generated variants.
      *
-     * @return array{storage_key: string, absolute_path: string}
+     * @param array<string, mixed> $config
+     * @return array{
+     *   storage_key: string,
+     *   file_size: int,
+     *   width: int,
+     *   height: int,
+     *   variants: array<string, array{storage_key: string, mime_type: string, file_size: int, width: int, height: int}>
+     * }
      */
-    public function storeOriginal(string $mediaId, ValidatedImage $image): array
+    public function storeProcessed(string $mediaId, ValidatedImage $image, array $config): array
     {
-        $directory = $this->root . DIRECTORY_SEPARATOR . substr($mediaId, 0, 2);
-        $this->ensureDirectory($directory);
+        $prefix = substr($mediaId, 0, 2);
+        $baseDirectory = $this->root . DIRECTORY_SEPARATOR . $prefix;
+        $variantDirectory = $baseDirectory . DIRECTORY_SEPARATOR . $mediaId . '_variants';
+        $this->ensureDirectory($baseDirectory);
 
-        $storageKey = substr($mediaId, 0, 2) . '/' . $mediaId . '.' . $image->extension;
-        $destination = $this->root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $storageKey);
+        $extension = $image->extension;
+        $originalKey = $prefix . '/' . $mediaId . '.' . $extension;
+        $originalPath = $baseDirectory . DIRECTORY_SEPARATOR . $mediaId . '.' . $extension;
 
-        if (file_exists($destination)) {
+        if (file_exists($originalPath)) {
             throw new MediaUploadException('A storage collision occurred. Please retry the upload.');
         }
 
-        if (!move_uploaded_file($image->file->temporaryPath, $destination)) {
-            throw new MediaUploadException('The server could not move the uploaded image into private storage.');
+        try {
+            $processingResult = $this->processor->process(
+                $image->file->temporaryPath,
+                $originalPath,
+                $variantDirectory,
+                $image->mimeType,
+                $config
+            );
+
+            $variants = [];
+            foreach ($processingResult['variants'] as $name => $details) {
+                $key = $prefix . '/' . $mediaId . '_variants/' . $name . '.' . $extension;
+                $variants[$name] = [
+                    'storage_key' => $key,
+                    'mime_type' => $image->mimeType,
+                    'file_size' => $details['file_size'],
+                    'width' => $details['width'],
+                    'height' => $details['height'],
+                ];
+            }
+
+            return [
+                'storage_key' => $originalKey,
+                'file_size' => $processingResult['file_size'],
+                'width' => $processingResult['width'],
+                'height' => $processingResult['height'],
+                'variants' => $variants,
+            ];
+        } catch (\Throwable $exception) {
+            $this->removeDirectoryFiles($variantDirectory);
+            if (is_file($originalPath)) {
+                @unlink($originalPath);
+            }
+            if ($exception instanceof MediaUploadException) {
+                throw $exception;
+            }
+            throw new MediaUploadException('The processed image could not be stored.');
         }
-
-        @chmod($destination, 0640);
-
-        return [
-            'storage_key' => $storageKey,
-            'absolute_path' => $destination,
-        ];
     }
 
     public function deleteByStorageKey(string $storageKey): void
     {
         $path = $this->resolveSafePath($storageKey);
-
         if (is_file($path) && !unlink($path)) {
             throw new MediaUploadException('Could not remove a stored media file.');
         }
@@ -71,12 +108,23 @@ final class PrivateLocalStorage
         if (is_dir($directory)) {
             return;
         }
-
         if (!mkdir($directory, 0750, true) && !is_dir($directory)) {
-            throw new MediaUploadException('Could not create the private media storage directory.');
+            throw new MediaUploadException('Could not create a private media storage directory.');
         }
-
         @chmod($directory, 0750);
+    }
+
+    private function removeDirectoryFiles(string $directory): void
+    {
+        if (!is_dir($directory)) {
+            return;
+        }
+        foreach (glob($directory . DIRECTORY_SEPARATOR . '*') ?: [] as $file) {
+            if (is_file($file)) {
+                @unlink($file);
+            }
+        }
+        @rmdir($directory);
     }
 
     private function resolveSafePath(string $storageKey): string
